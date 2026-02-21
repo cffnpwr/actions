@@ -1,0 +1,42 @@
+name: Nix flake check
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "**/*.nix"
+      - "**/flake.nix"
+      - "**/flake.lock"
+  workflow_call:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions: {}
+
+jobs:
+  flake-check:
+    name: Flake Check
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+
+      - name: Install Nix
+        uses: DeterminateSystems/nix-installer-action@c5a866b6ab867e88becbed4467b93592bce69f8a # v21
+        with:
+          extra-conf: |
+            sandbox = false
+            ssl-cert-file = /etc/ssl/certs/ca-certificates.crt
+
+      - name: Check flake
+        run: nix flake check --all-systems
