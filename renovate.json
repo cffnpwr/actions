@@ -1,0 +1,26 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "github>cffnpwr/renovate-config"
+  ],
+  "customManagers": [
+    {
+      "customType": "regex",
+      "managerFilePatterns": ["^\\.github/workflows/.+\\.ya?ml$"],
+      "matchStrings": [
+        "gh release download (?<currentValue>v[\\d.]+)\\s[\\s\\S]*?-R rhysd/actionlint"
+      ],
+      "depNameTemplate": "rhysd/actionlint",
+      "datasourceTemplate": "github-releases"
+    },
+    {
+      "customType": "regex",
+      "managerFilePatterns": ["^\\.github/workflows/.+\\.ya?ml$"],
+      "matchStrings": [
+        "gh release download (?<currentValue>v[\\d.]+)\\s[\\s\\S]*?-R suzuki-shunsuke/ghalint"
+      ],
+      "depNameTemplate": "suzuki-shunsuke/ghalint",
+      "datasourceTemplate": "github-releases"
+    }
+  ]
+}
