@@ -1,0 +1,90 @@
+name: GitHub Actions Lint
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  workflow_call:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions: {}
+
+jobs:
+  actionlint:
+    name: Run actionlint
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+
+      - name: Install actionlint
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          ACTIONLINT_VERSION=v1.7.11
+          asset="actionlint_${ACTIONLINT_VERSION#v}_linux_amd64.tar.gz"
+          gh release download "$ACTIONLINT_VERSION" \
+            -R rhysd/actionlint \
+            -p "$asset"
+          gh attestation verify "$asset" \
+            -R rhysd/actionlint
+          tar xf "$asset" actionlint
+          sudo mv actionlint /usr/local/bin/
+
+      - name: Run actionlint
+        run: actionlint -color
+
+  ghalint:
+    name: Run ghalint
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+
+      - name: Install ghalint
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release download v1.5.5 \
+            -R suzuki-shunsuke/ghalint \
+            -p "ghalint_linux_amd64.tar.gz"
+          gh attestation verify ghalint_linux_amd64.tar.gz \
+            -R suzuki-shunsuke/ghalint \
+            --signer-workflow suzuki-shunsuke/go-release-workflow/.github/workflows/release.yaml
+          tar xf ghalint_linux_amd64.tar.gz
+          sudo mv ghalint /usr/local/bin/
+
+      - name: Run ghalint
+        run: ghalint run
+
+  zizmor:
+    name: Run zizmor
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+
+      - name: Run zizmor
+        uses: zizmorcore/zizmor-action@0dce2577a4760a2749d8cfb7a84b7d5585ebcb7d # v0.5.0
+        with:
+          advanced-security: false
