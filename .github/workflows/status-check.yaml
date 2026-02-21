@@ -1,0 +1,80 @@
+name: Status check
+on:
+  pull_request_target: # zizmor: ignore[dangerous-triggers]
+    branches:
+      - main
+    types:
+      - opened
+      - synchronize
+      - reopened
+      - edited
+  workflow_call:
+    inputs:
+      timeout-minutes:
+        description: Timeout in minutes for the job
+        type: number
+        default: 30
+      pending-interval:
+        description: Polling interval in seconds when checks are pending
+        type: number
+        default: 15
+      error-interval:
+        description: Polling interval in seconds when gh command fails
+        type: number
+        default: 30
+
+concurrency:
+  group: >-
+    ${{ github.workflow }}- ${{ github.event.pull_request.head.repo.full_name || github.repository }}- ${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+
+permissions: {}
+
+jobs:
+  status-check:
+    name: Status check
+    runs-on: ubuntu-24.04
+    timeout-minutes: ${{ inputs.timeout-minutes || 30 }}
+    permissions:
+      pull-requests: read
+      checks: read
+      statuses: read
+    steps:
+      - name: Watch PR checks
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+          pr_number: ${{ github.event.number }}
+          pending_interval: ${{ inputs.pending-interval || 15 }}
+          error_interval: ${{ inputs.error-interval || 30 }}
+        run: |
+          while true; do
+
+            until checks_json="$( \
+              gh pr checks "$pr_number" \
+                --json bucket,name,workflow \
+                --jq 'map(select(.name != "Status check"))' \
+            )"; do
+              sleep "$error_interval"
+            done
+
+            checks_state="$(\
+              jq -cr '
+                {
+                  has_fail: any(.[]; .bucket == "fail" or .bucket == "cancel"),
+                  has_pending: any(.[]; .workflow != "" and .bucket == "pending"),
+                }
+                | if .has_fail then "fail"
+                  elif .has_pending then "pending"
+                  else "done"
+                  end
+              ' <<< "$checks_json" \
+            )"
+
+            case "$checks_state" in
+              fail)    exit 1 ;;
+              done)    exit 0 ;;
+              pending) sleep "$pending_interval" ;;
+            esac
+
+          done
