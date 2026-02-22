@@ -1,5 +1,5 @@
 [global]
-excludes = [".git/**", "result/**"]
+excludes = [".git/**", ".serena/**", "result/**"]
 
 [formatter.nix]
 command = "nixfmt"

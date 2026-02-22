@@ -25,7 +25,9 @@ on:
 
 concurrency:
   group: >-
-    ${{ github.workflow }}- ${{ github.event.pull_request.head.repo.full_name || github.repository }}- ${{ github.head_ref || github.run_id }}
+    ${{ github.workflow }}-
+    ${{ github.event.pull_request.head.repo.full_name || github.repository }}-
+    ${{ github.head_ref || github.run_id }}
   cancel-in-progress: true
 
 permissions: {}
@@ -47,7 +49,7 @@ jobs:
           pr_number: ${{ github.event.number }}
           pending_interval: ${{ inputs.pending-interval || 15 }}
           error_interval: ${{ inputs.error-interval || 30 }}
-        run: |
+        run: |-
           while true; do
 
             until checks_json="$( \
