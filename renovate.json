@@ -8,7 +8,7 @@
       "customType": "regex",
       "managerFilePatterns": ["^\\.github/workflows/.+\\.ya?ml$"],
       "matchStrings": [
-        "gh release download (?<currentValue>v[\\d.]+)\\s[\\s\\S]*?-R rhysd/actionlint"
+        "ACTIONLINT_VERSION=(?<currentValue>v[\\d.]+)"
       ],
       "depNameTemplate": "rhysd/actionlint",
       "datasourceTemplate": "github-releases"
@@ -17,7 +17,7 @@
       "customType": "regex",
       "managerFilePatterns": ["^\\.github/workflows/.+\\.ya?ml$"],
       "matchStrings": [
-        "gh release download (?<currentValue>v[\\d.]+)\\s[\\s\\S]*?-R suzuki-shunsuke/ghalint"
+        "GHALINT_VERSION=(?<currentValue>v[\\d.]+)"
       ],
       "depNameTemplate": "suzuki-shunsuke/ghalint",
       "datasourceTemplate": "github-releases"

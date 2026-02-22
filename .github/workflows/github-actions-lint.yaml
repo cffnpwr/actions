@@ -60,13 +60,15 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release download v1.5.5 \
+          GHALINT_VERSION=v1.5.5
+          asset="ghalint_${GHALINT_VERSION#v}_linux_amd64.tar.gz"
+          gh release download "$GHALINT_VERSION" \
             -R suzuki-shunsuke/ghalint \
-            -p "ghalint_linux_amd64.tar.gz"
-          gh attestation verify ghalint_linux_amd64.tar.gz \
+            -p "$asset"
+          gh attestation verify "$asset" \
             -R suzuki-shunsuke/ghalint \
             --signer-workflow suzuki-shunsuke/go-release-workflow/.github/workflows/release.yaml
-          tar xf ghalint_linux_amd64.tar.gz
+          tar xf "$asset" ghalint
           sudo mv ghalint /usr/local/bin/
 
       - name: Run ghalint
