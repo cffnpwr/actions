@@ -52,7 +52,7 @@ jobs:
             until checks_json="$( \
               gh pr checks "$pr_number" \
                 --json bucket,name,workflow \
-                --jq 'map(select(.name != "Status check"))' \
+                --jq 'map(select(.workflow != "Status check"))' \
             )"; do
               sleep "$error_interval"
             done
