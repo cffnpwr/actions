@@ -9,6 +9,11 @@ on:
       - reopened
       - synchronize
   workflow_call:
+    inputs:
+      runner:
+        description: Runner label to use for the job
+        type: string
+        default: ubuntu-24.04
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.number }}
@@ -19,7 +24,7 @@ permissions: {}
 jobs:
   semantic-pr-title:
     name: Check Semantic PR title
-    runs-on: ubuntu-24.04
+    runs-on: ${{ inputs.runner || 'ubuntu-24.04' }}
     timeout-minutes: 10
     permissions:
       pull-requests: read
