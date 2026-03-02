@@ -7,11 +7,13 @@
   "explorer.fileNesting.patterns": {
     "*.nix": "${capture}.test.nix",
     "flake.nix": "flake.lock",
-    "AGENTS.md": "CLAUDE.md"
+    "AGENTS.md": "CLAUDE.md",
+    "pyproject.toml": "uv.lock"
   },
   "[nix]": {
     "editor.defaultFormatter": "brettm12345.nixfmt-vscode"
   },
+  "python.terminal.activateEnvironment": false,
   "json.schemaDownload.trustedDomains": {
     "https://schemastore.azurewebsites.net/": true,
     "https://raw.githubusercontent.com/": true,
