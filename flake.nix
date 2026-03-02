@@ -17,28 +17,30 @@
       ];
       perSystem =
         {
-          config,
-          self',
-          inputs',
           pkgs,
-          system,
           ...
         }:
         {
           # Formatter
-          formatter = pkgs.nixfmt;
+          formatter = pkgs.treefmt;
 
           devShells.default = pkgs.mkShell {
             packages = with pkgs; [
-              actionlint
+              # Common tools
               git
+              treefmt
+
+              # Github Actions linters
+              actionlint
               ghalint
-              nil
+              zizmor
+
+              # YAML linters and formatters
+              yamlfmt
+
+              # Nix linters and formatters
               nixd
               nixfmt
-              treefmt
-              yamlfmt
-              zizmor
             ];
 
             shellHook = ''
