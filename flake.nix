@@ -41,6 +41,9 @@
               # Nix linters and formatters
               nixd
               nixfmt
+
+              # for python modules
+              uv
             ];
 
             shellHook = ''
