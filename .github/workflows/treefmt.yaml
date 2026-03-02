@@ -32,6 +32,8 @@ jobs:
           extra-conf: |
             sandbox = false
             ssl-cert-file = /etc/ssl/certs/ca-certificates.crt
+            extra-substituters = https://nix-cache.cffnpwr.dev
+            extra-trusted-public-keys = cffnpwr-nixpkgs-extras:dmp2DUGwdqawLCPOsOcRxU/NpCO/qA1jha/8rmoSzvA=
 
       - name: Run treefmt
         run: nix develop --command treefmt --fail-on-change
