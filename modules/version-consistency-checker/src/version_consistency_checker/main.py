@@ -1,5 +1,6 @@
 import sys
 from pathlib import Path
+from typing import Annotated
 
 import typer
 
@@ -7,27 +8,34 @@ from version_consistency_checker.checker import check_consistency
 from version_consistency_checker.providers.mise import MiseProvider
 from version_consistency_checker.providers.nix import NixProvider
 
-app = typer.Typer(add_completion=False)
+app = typer.Typer(
+  add_completion=False,
+  context_settings={"help_option_names": ["-h", "--help"]},
+)
 
 
 @app.command()
 def main(
-  flake_dir: Path = typer.Option(
-    Path(),
-    "--flake-dir",
-    help="Path to the directory containing flake.nix",
-    exists=True,
-    file_okay=False,
-    resolve_path=True,
-  ),
-  project_dir: Path = typer.Option(
-    Path(),
-    "--project-dir",
-    help="Path to the project directory containing mise.toml",
-    exists=True,
-    file_okay=False,
-    resolve_path=True,
-  ),
+  flake_dir: Annotated[
+    Path,
+    typer.Option(
+      "--flake-dir",
+      help="Path to the directory containing flake.nix",
+      exists=True,
+      file_okay=False,
+      resolve_path=True,
+    ),
+  ] = Path(),
+  project_dir: Annotated[
+    Path,
+    typer.Option(
+      "--project-dir",
+      help="Path to the project directory containing mise.toml",
+      exists=True,
+      file_okay=False,
+      resolve_path=True,
+    ),
+  ] = Path(),
 ) -> None:
   nix = NixProvider(flake_dir=flake_dir)
   mise = MiseProvider(project_dir=project_dir)
