@@ -1,0 +1,4 @@
+[install]
+# Only install package versions published at least 3 days ago
+minimumReleaseAge = 259200 # 3 days in seconds
+minimumReleaseAgeExcludes = ["@cffnpwr/eslint-config", "@cffnpwr/result-ts"]

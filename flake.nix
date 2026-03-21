@@ -4,6 +4,10 @@
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
     flake-parts.url = "github:hercules-ci/flake-parts";
+    bun2nix = {
+      url = "github:nix-community/bun2nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   outputs =
@@ -17,12 +21,20 @@
       ];
       perSystem =
         {
-          pkgs,
+          system,
           ...
         }:
+        let
+          pkgs = import inputs.nixpkgs {
+            inherit system;
+            overlays = [ inputs.bun2nix.overlays.default ];
+          };
+        in
         {
           # Formatter
           formatter = pkgs.treefmt;
+
+          packages.version-consistency-checker = pkgs.callPackage ./modules/version-consistency-checker { };
 
           devShells.default = pkgs.mkShell {
             packages = with pkgs; [
@@ -42,8 +54,9 @@
               nixd
               nixfmt
 
-              # for python modules
-              uv
+              # for TypeScript modules
+              bun
+              bun2nix
             ];
 
             shellHook = ''

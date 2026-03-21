@@ -1,44 +1,37 @@
-# Version consistency checker
+# version-consistency-checker
 
-Checks that tool versions in `mise.toml` match those in the Nix devshell (`devShells.default`).
+[![GitHub License](https://img.shields.io/github/license/cffnpwr/actions?style=flat)](../../LICENSE)
 
-## Usage
+A CLI tool that checks version consistency between Nix flake devShell packages and other version sources (e.g. mise).
 
-```bash
-uv run main.py
-```
+[日本語のREADMEはこちら](./README-ja.md)
 
-Exits with code `0` if all versions match, `1` if any mismatch is found.
-
-## Requirements
-
-- Python 3.14.3
-- `mise` available in `PATH`
-- `nix` available in `PATH`
-
-## Output
-
-On success:
-
-```text
-All versions match.
-```
-
-On mismatch:
-
-```text
-MISMATCH: treefmt mise=0.15.0 nix=0.16.0
-```
-
-## Development
+## How to Use
 
 ```bash
-# Install dev dependencies
-uv sync
-
-# Lint
-uv run ruff check .
-
-# Format
-uv run ruff format .
+version-consistency-checker [options]
 ```
+
+### Options
+
+| Flag                     | Description                                             | Default |
+| ------------------------ | ------------------------------------------------------- | ------- |
+| `-h, --help`             | Show help message                                       |         |
+| `--flake-dir <string>`   | Path to the directory containing `flake.nix`            | `.`     |
+| `--nix-bin <string>`     | Path to the `nix` binary (default: resolved from PATH)  |         |
+| `--project-dir <string>` | Path to the project directory containing `mise.toml`    | `.`     |
+| `--mise-bin <string>`    | Path to the `mise` binary (default: resolved from PATH) |         |
+
+### Example
+
+```bash
+# Check version consistency in the current directory
+version-consistency-checker
+
+# Specify custom paths
+version-consistency-checker --flake-dir /path/to/project --project-dir /path/to/project
+```
+
+## License
+
+[MIT License](../../LICENSE)
