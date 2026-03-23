@@ -1,0 +1,86 @@
+name: LLM Renovate Review
+on:
+  workflow_call:
+    inputs:
+      runner:
+        description: Runner label to use for the job
+        type: string
+        default: ubuntu-24.04
+      model:
+        description: |
+          opencode model string in provider/model format.
+          e.g. anthropic/claude-sonnet-4-6, openai/gpt-4o, google/gemini-2.5-pro
+          Required. When triggered directly via pull_request (not workflow_call),
+          this input is unavailable and the job will fail intentionally.
+        type: string
+        required: true
+    secrets:
+      LLM_API_KEY:
+        description: |
+          API key for the LLM provider specified in `model`.
+          Passed as <PROVIDER>_API_KEY (uppercase provider prefix + _API_KEY).
+          e.g. model=anthropic/claude-sonnet-4-6 → ANTHROPIC_API_KEY
+               model=openai/gpt-4o               → OPENAI_API_KEY
+               model=google/gemini-2.5-pro       → GOOGLE_API_KEY
+        required: true
+
+permissions: {}
+
+jobs:
+  llm-renovate-review:
+    name: LLM Renovate Review
+    runs-on: ${{ inputs.runner || 'ubuntu-24.04' }}
+    timeout-minutes: 30
+    permissions:
+      pull-requests: write
+      contents: read
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+
+      - name: Set LLM provider API key
+        env:
+          MODEL: ${{ inputs.model }}
+          LLM_API_KEY: ${{ secrets.LLM_API_KEY }}
+        run: |
+          provider=$(echo "$MODEL" | cut -d/ -f1 | tr '[:lower:]' '[:upper:]')
+          echo "${provider}_API_KEY=${LLM_API_KEY}" >> "$GITHUB_ENV"
+
+      - uses: anomalyco/opencode/github@eb3bfffad453f1c8c3f0f92bba0d8e34c83fa244 # v1.3.0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          model: ${{ inputs.model }}
+          use_github_token: "true"
+          prompt: |
+            You are a software dependency expert reviewing a Renovate major version update PR.
+
+            ## Investigation Steps
+
+            1. Read the PR diff to identify the package name and version range being updated.
+            2. Read the PR description to extract Renovate's release notes summary.
+            3. Search the repository code for all usages of the upgraded package to identify actual impact.
+            4. Refer to the official CHANGELOG, migration guide, or GitHub Releases of the package (in that priority order) to identify breaking changes.
+
+            ## Review Output
+
+            Based on the investigation above, write a PR comment in Japanese with the following structure:
+
+            ### 破壊的変更の概要
+            List all breaking changes relevant to this repository from the changelog.
+
+            ### このリポジトリへの影響
+            Based on actual usages found in the repository code, describe which breaking changes affect this repository and which do not.
+
+            ### マイグレーション手順
+            Concrete steps required to safely upgrade, scoped to this repository's actual code.
+
+            ### リスク評価
+            Overall risk level and its rationale.
+
+            ### マージ判定
+            One of the following, with reasoning:
+            - **SAFE_TO_MERGE**: No breaking changes affect this repository
+            - **NEEDS_REVIEW**: Manual review recommended before merging
+            - **DO_NOT_MERGE**: High-risk breaking changes detected that require code changes first

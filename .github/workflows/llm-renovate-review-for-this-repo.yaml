@@ -1,0 +1,26 @@
+name: LLM Renovate Review (for this repo)
+on:
+  pull_request:
+    branches:
+      - main
+    types:
+      - opened
+      - synchronize
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.number }}
+  cancel-in-progress: true
+
+permissions: {}
+
+jobs:
+  llm-renovate-review:
+    name: LLM Renovate Review
+    uses: ./.github/workflows/llm-renovate-review.yaml
+    if: >-
+      github.event.pull_request.user.login == 'renovate[bot]' &&
+      contains(github.event.pull_request.title, '(major)')
+    with:
+      model: google/gemini-3.1-pro-preview
+    secrets:
+      LLM_API_KEY: ${{ secrets.LLM_API_KEY }}
