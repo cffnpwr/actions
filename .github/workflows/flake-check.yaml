@@ -10,12 +10,7 @@ on:
       - "**/*.nix"
       - "**/flake.nix"
       - "**/flake.lock"
-  workflow_call:
-    inputs:
-      runner:
-        description: Runner label to use for the job
-        type: string
-        default: ubuntu-24.04
+  workflow_call: {}
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -25,11 +20,23 @@ permissions: {}
 
 jobs:
   flake-check:
-    name: Flake Check
-    runs-on: ${{ inputs.runner || 'ubuntu-24.04' }}
+    name: Flake Check (${{ matrix.system }})
+    runs-on: ${{ matrix.runner }}
     timeout-minutes: 10
     permissions:
       contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - system: x86_64-linux
+            runner: ubuntu-24.04
+          - system: aarch64-linux
+            runner: ubuntu-24.04-arm
+          - system: aarch64-darwin
+            runner: macos-15
+          - system: x86_64-darwin
+            runner: macos-15
     steps:
       - name: Checkout
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
@@ -46,4 +53,4 @@ jobs:
             extra-trusted-public-keys = cffnpwr-nixpkgs-extras:dmp2DUGwdqawLCPOsOcRxU/NpCO/qA1jha/8rmoSzvA=
 
       - name: Check flake
-        run: nix flake check --all-systems
+        run: nix flake check --system ${{ matrix.system }}
