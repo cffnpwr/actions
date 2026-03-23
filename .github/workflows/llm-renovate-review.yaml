@@ -53,7 +53,7 @@ jobs:
         with:
           model: ${{ inputs.model }}
           use_github_token: "true"
-          prompt: |
+          prompt: |-
             You are a software dependency expert reviewing a Renovate major version update PR.
 
             ## Investigation Steps
