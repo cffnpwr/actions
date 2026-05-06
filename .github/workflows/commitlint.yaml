@@ -8,7 +8,9 @@ on:
       config-file:
         description: |
           Path to a commitlint config file in the caller repository (relative to repo root).
-          When empty, the default config bundled in this repository is used.
+          When empty, the default config bundled in this repository is used. In that case
+          the calling job must grant `actions: read` so the bundled config can be checked
+          out at the same SHA the caller pinned for this reusable workflow.
         type: string
         default: ""
       runner:
@@ -29,6 +31,7 @@ jobs:
     timeout-minutes: 10
     permissions:
       contents: read
+      actions: read
     steps:
       - name: Checkout caller repository
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
@@ -36,21 +39,48 @@ jobs:
           fetch-depth: 0
           persist-credentials: false
 
-      - name: Determine reusable workflow source
+      # github.workflow_ref / github.workflow_sha point to the caller workflow when this is
+      # invoked via workflow_call, so they cannot be used to resolve the reusable workflow's
+      # own repo/ref. Instead, look up referenced_workflows on the current run, which records
+      # the exact SHA the caller pinned for this reusable workflow. Dogfood (pull_request on
+      # this repo) is detected by the caller repository matching cffnpwr/actions; in that case
+      # the file is already present in the caller checkout.
+      - name: Resolve default commitlint config source
         id: source
         if: inputs.config-file == ''
         env:
-          WORKFLOW_REF: ${{ github.workflow_ref }}
+          GH_TOKEN: ${{ github.token }}
+          CALLER_REPO: ${{ github.repository }}
+          RUN_ID: ${{ github.run_id }}
+          SOURCE_REPO: cffnpwr/actions
         run: |
-          repo="${WORKFLOW_REF%%/.github/*}"
-          echo "repo=$repo" >> "$GITHUB_OUTPUT"
+          set -euo pipefail
+          if [ "$CALLER_REPO" = "$SOURCE_REPO" ]; then
+            {
+              echo "checkout=false"
+              echo "path=.github/commitlint/default.config.ts"
+            } >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          sha=$(gh api "/repos/${CALLER_REPO}/actions/runs/${RUN_ID}" \
+            --jq ".referenced_workflows[] | select(.path | startswith(\"${SOURCE_REPO}/\")) | .sha" \
+            | head -n1)
+          if [ -z "$sha" ]; then
+            echo "::error::could not resolve ${SOURCE_REPO} reusable workflow SHA from referenced_workflows. Ensure the calling job grants 'actions: read'."
+            exit 1
+          fi
+          {
+            echo "checkout=true"
+            echo "sha=$sha"
+            echo "path=__commitlint_defaults/.github/commitlint/default.config.ts"
+          } >> "$GITHUB_OUTPUT"
 
       - name: Checkout default commitlint config
-        if: inputs.config-file == ''
+        if: inputs.config-file == '' && steps.source.outputs.checkout == 'true'
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
-          repository: ${{ steps.source.outputs.repo }}
-          ref: ${{ github.workflow_sha }}
+          repository: cffnpwr/actions
+          ref: ${{ steps.source.outputs.sha }}
           path: __commitlint_defaults
           sparse-checkout: .github/commitlint
           sparse-checkout-cone-mode: false
@@ -60,6 +90,7 @@ jobs:
         id: config
         env:
           CONFIG_FILE_INPUT: ${{ inputs.config-file }}
+          DEFAULT_CONFIG_PATH: ${{ steps.source.outputs.path }}
         run: |
           if [ -n "$CONFIG_FILE_INPUT" ]; then
             if [ ! -f "$CONFIG_FILE_INPUT" ]; then
@@ -68,7 +99,7 @@ jobs:
             fi
             echo "path=$CONFIG_FILE_INPUT" >> "$GITHUB_OUTPUT"
           else
-            echo "path=__commitlint_defaults/.github/commitlint/default.config.ts" >> "$GITHUB_OUTPUT"
+            echo "path=$DEFAULT_CONFIG_PATH" >> "$GITHUB_OUTPUT"
           fi
 
       - name: Setup Bun
