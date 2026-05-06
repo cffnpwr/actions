@@ -16,6 +16,20 @@ const ALLOWED_GITMOJI = [
   ":package:",
 ] as const;
 
+const AI_COAUTHOR_PATTERNS: readonly RegExp[] = [
+  /claude/i,
+  /anthropic/i,
+  /openai/i,
+  /chatgpt/i,
+  /gpt-?\d/i,
+  /copilot/i,
+  /\bcursor\b/i,
+  /\bdevin\b/i,
+  /\bcodex\b/i,
+  /gemini/i,
+  /\bbard\b/i,
+];
+
 const ALLOWED_TYPES = [
   "feat",
   "fix",
@@ -40,10 +54,26 @@ const config: UserConfig = {
     "body-empty": [2, "always"],
     "footer-empty": [2, "always"],
     "gitmoji-whitelist": [2, "always"],
+    "no-ai-coauthor": [2, "always"],
   },
   plugins: [
     {
       rules: {
+        "no-ai-coauthor": ({ raw }) => {
+          if (!raw) return [true];
+          for (const line of raw.split(/\r?\n/)) {
+            const match = line.trim().match(/^co-authored-by:\s*(.+)$/i);
+            if (!match) continue;
+            const value = match[1];
+            if (AI_COAUTHOR_PATTERNS.some((pattern) => pattern.test(value))) {
+              return [
+                false,
+                `Co-authored-by trailer must not reference AI agents: "${line.trim()}"`,
+              ];
+            }
+          }
+          return [true];
+        },
         "gitmoji-whitelist": ({ subject }) => {
           if (!subject) return [true];
           const match = subject.match(/^(:[a-z0-9_+-]+:)\s/);
