@@ -1,0 +1,85 @@
+name: commitlint
+on:
+  pull_request:
+    branches:
+      - main
+  workflow_call:
+    inputs:
+      config-file:
+        description: |
+          Path to a commitlint config file in the caller repository (relative to repo root).
+          When empty, the default config bundled in this repository is used.
+        type: string
+        default: ""
+      runner:
+        description: Runner label to use for the job
+        type: string
+        default: ubuntu-24.04
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.number }}
+  cancel-in-progress: true
+
+permissions: {}
+
+jobs:
+  commitlint:
+    name: Run commitlint
+    runs-on: ${{ inputs.runner || 'ubuntu-24.04' }}
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout caller repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Determine reusable workflow source
+        id: source
+        if: inputs.config-file == ''
+        env:
+          WORKFLOW_REF: ${{ github.workflow_ref }}
+        run: |
+          repo="${WORKFLOW_REF%%/.github/*}"
+          echo "repo=$repo" >> "$GITHUB_OUTPUT"
+
+      - name: Checkout default commitlint config
+        if: inputs.config-file == ''
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          repository: ${{ steps.source.outputs.repo }}
+          ref: ${{ github.workflow_sha }}
+          path: __commitlint_defaults
+          sparse-checkout: .github/commitlint
+          sparse-checkout-cone-mode: false
+          persist-credentials: false
+
+      - name: Resolve commitlint config path
+        id: config
+        env:
+          CONFIG_FILE_INPUT: ${{ inputs.config-file }}
+        run: |
+          if [ -n "$CONFIG_FILE_INPUT" ]; then
+            if [ ! -f "$CONFIG_FILE_INPUT" ]; then
+              echo "::error::config-file '$CONFIG_FILE_INPUT' not found in caller repository"
+              exit 1
+            fi
+            echo "path=$CONFIG_FILE_INPUT" >> "$GITHUB_OUTPUT"
+          else
+            echo "path=__commitlint_defaults/.github/commitlint/default.config.ts" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+        with:
+          bun-version: 1.3.13
+
+      - name: Run commitlint
+        env:
+          COMMITLINT_VERSION: 20.5.3
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          CONFIG_PATH: ${{ steps.config.outputs.path }}
+        run: bunx "@commitlint/cli@${COMMITLINT_VERSION}" --config "$CONFIG_PATH" --from "$BASE_SHA" --to "$HEAD_SHA" --verbose
