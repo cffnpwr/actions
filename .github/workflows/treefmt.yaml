@@ -26,14 +26,8 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Install Nix
-        uses: DeterminateSystems/determinate-nix-action@f4c468f2287f0f14a113841b41f2dc8957119519 # v3.19.0
-        with:
-          extra-conf: |
-            sandbox = false
-            ssl-cert-file = /etc/ssl/certs/ca-certificates.crt
-            extra-substituters = https://nix-cache.cffnpwr.dev
-            extra-trusted-public-keys = cffnpwr-nixpkgs-extras:dmp2DUGwdqawLCPOsOcRxU/NpCO/qA1jha/8rmoSzvA=
+      - name: Install mise
+        uses: jdx/mise-action@e6a8b3978addb5a52f2b4cd9d91eafa7f0ab959d # v4.2.0
 
       - name: Run treefmt
-        run: nix develop --command treefmt --fail-on-change
+        run: mise exec -- treefmt --fail-on-change
