@@ -21,6 +21,24 @@
       ],
       "depNameTemplate": "suzuki-shunsuke/ghalint",
       "datasourceTemplate": "github-releases"
+    },
+    {
+      "customType": "regex",
+      "managerFilePatterns": ["^\\.github/workflows/.+\\.ya?ml$"],
+      "matchStrings": [
+        "COMMITLINT_VERSION: \"?(?<currentValue>[\\d.]+)\"?"
+      ],
+      "depNameTemplate": "@commitlint/cli",
+      "datasourceTemplate": "npm"
+    },
+    {
+      "customType": "regex",
+      "managerFilePatterns": ["^\\.github/workflows/.+\\.ya?ml$"],
+      "matchStrings": [
+        "CONFIG_PACKAGE_VERSION: \"?(?<currentValue>[\\d.]+)\"?"
+      ],
+      "depNameTemplate": "@cffnpwr/commitlint-config",
+      "datasourceTemplate": "npm"
     }
   ]
 }
