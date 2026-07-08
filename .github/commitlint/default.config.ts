@@ -2,6 +2,7 @@ import type { UserConfig } from "@commitlint/types";
 
 const ALLOWED_GITMOJI = [
   ":art:",
+  ":recycle:",
   ":zap:",
   ":fire:",
   ":bug:",
@@ -14,6 +15,7 @@ const ALLOWED_GITMOJI = [
   ":green_heart:",
   ":wrench:",
   ":package:",
+  ":rewind:",
 ] as const;
 
 const AI_COAUTHOR_PATTERNS: readonly RegExp[] = [
