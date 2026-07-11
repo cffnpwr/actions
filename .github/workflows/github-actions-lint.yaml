@@ -44,7 +44,7 @@ jobs:
           RUNNER_OS: ${{ runner.os }}
           RUNNER_ARCH: ${{ runner.arch }}
         run: |
-          ACTIONLINT_VERSION=v1.7.11
+          ACTIONLINT_VERSION=v1.7.12
           os="$(echo "$RUNNER_OS" | tr '[:upper:]' '[:lower:]')"
           case "$RUNNER_ARCH" in
             X64)   arch="amd64" ;;
