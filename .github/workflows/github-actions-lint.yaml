@@ -12,6 +12,9 @@ on:
     paths:
       - .github/workflows/**
       - .github/actions/**
+  merge_group:
+    types:
+      - checks_requested
   workflow_call:
     inputs:
       runner:
