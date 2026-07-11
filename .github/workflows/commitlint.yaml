@@ -65,7 +65,7 @@ jobs:
 
       - name: Run commitlint
         env:
-          COMMITLINT_VERSION: 20.5.3
+          COMMITLINT_VERSION: 21.2.1
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
           HEAD_SHA: ${{ github.event.pull_request.head.sha }}
           CONFIG_PATH: ${{ steps.config.outputs.path }}
