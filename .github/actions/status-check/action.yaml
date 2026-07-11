@@ -1,0 +1,39 @@
+name: Status check
+description: Wait for a commit's checks to complete, for both pull request and merge group runs.
+inputs:
+  github-token:
+    description: Token used for GitHub API requests.
+    required: true
+  head-sha:
+    description: The head SHA to watch (pull request head or merge group head).
+    required: true
+  pending-interval:
+    description: Polling interval in seconds while workflows are pending.
+    required: false
+    default: "15"
+  error-interval:
+    description: Polling interval in seconds after a failed API request.
+    required: false
+    default: "30"
+
+runs:
+  using: composite
+  steps:
+    - name: Set up Bun
+      uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+      with:
+        bun-version: 1.3.14
+
+    - name: Install dependencies
+      shell: bash
+      working-directory: ${{ github.action_path }}
+      run: bun install --frozen-lockfile --production
+
+    - name: Watch checks
+      shell: bash
+      env:
+        GITHUB_TOKEN: ${{ inputs.github-token }}
+        HEAD_SHA: ${{ inputs.head-sha }}
+        PENDING_INTERVAL: ${{ inputs.pending-interval }}
+        ERROR_INTERVAL: ${{ inputs.error-interval }}
+      run: bun run "$GITHUB_ACTION_PATH/src/main.ts"
