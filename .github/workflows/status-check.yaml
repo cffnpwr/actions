@@ -8,6 +8,9 @@ on:
       - synchronize
       - reopened
       - edited
+  merge_group:
+    types:
+      - checks_requested
   workflow_call:
     inputs:
       timeout-minutes:
@@ -19,7 +22,7 @@ on:
         type: number
         default: 15
       error-interval:
-        description: Polling interval in seconds when gh command fails
+        description: Polling interval in seconds when a GitHub API request fails
         type: number
         default: 30
       runner:
@@ -28,7 +31,7 @@ on:
         default: ubuntu-24.04
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.event.number }}
+  group: ${{ github.workflow }}-${{ github.event.number || github.event.merge_group.head_sha }}
   cancel-in-progress: true
 
 permissions: {}
@@ -41,45 +44,22 @@ jobs:
     permissions:
       contents: read
       actions: read
-      pull-requests: read
       checks: read
       statuses: read
     steps:
-      - name: Watch PR checks
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GH_REPO: ${{ github.repository }}
-          pr_number: ${{ github.event.number }}
-          pending_interval: ${{ inputs.pending-interval || 15 }}
-          error_interval: ${{ inputs.error-interval || 30 }}
-        run: |-
-          while true; do
+      - name: Check out actions repository
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          repository: cffnpwr/actions
+          ref: ${{ job.workflow_sha }}
+          path: .actions
+          sparse-checkout: .github/actions/status-check
+          persist-credentials: false
 
-            until checks_json="$( \
-              gh pr checks "$pr_number" \
-                --json bucket,name,workflow \
-                --jq 'map(select(.workflow != "Status check"))' \
-            )"; do
-              sleep "$error_interval"
-            done
-
-            checks_state="$(\
-              jq -cr '
-                {
-                  has_fail: any(.[]; .bucket == "fail" or .bucket == "cancel"),
-                  has_pending: any(.[]; .workflow != "" and .bucket == "pending"),
-                }
-                | if .has_fail then "fail"
-                  elif .has_pending then "pending"
-                  else "done"
-                  end
-              ' <<< "$checks_json" \
-            )"
-
-            case "$checks_state" in
-              fail)    exit 1 ;;
-              done)    exit 0 ;;
-              pending) sleep "$pending_interval" ;;
-            esac
-
-          done
+      - name: Watch checks
+        uses: ./.actions/.github/actions/status-check
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          head-sha: ${{ github.event_name == 'merge_group' && github.event.merge_group.head_sha || github.event.pull_request.head.sha }}
+          pending-interval: ${{ inputs.pending-interval || 15 }}
+          error-interval: ${{ inputs.error-interval || 30 }}

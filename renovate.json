@@ -39,6 +39,16 @@
       ],
       "depNameTemplate": "@cffnpwr/commitlint-config",
       "datasourceTemplate": "npm"
+    },
+    {
+      "customType": "regex",
+      "managerFilePatterns": ["^\\.github/(?:workflows|actions)/.+\\.ya?ml$"],
+      "matchStrings": [
+        "bun-version: \"?(?<currentValue>[\\d.]+)\"?"
+      ],
+      "depNameTemplate": "oven-sh/bun",
+      "datasourceTemplate": "github-releases",
+      "extractVersionTemplate": "^bun-v(?<version>.+)$"
     }
   ]
 }
