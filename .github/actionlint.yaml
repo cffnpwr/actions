@@ -6,3 +6,6 @@ paths:
     ignore:
       - 'property "workflow_sha" is not defined'
       - 'property "workflow_ref" is not defined'
+  .github/workflows/github-actions-lint.yaml:
+    ignore:
+      - 'property "workflow_sha" is not defined'
