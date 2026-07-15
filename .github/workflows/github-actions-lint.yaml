@@ -33,16 +33,30 @@ jobs:
     permissions:
       contents: read
     steps:
-      - name: Checkout repository
+      - name: Checkout caller repository
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
           persist-credentials: false
 
+      - name: Check out actions repository
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          repository: cffnpwr/actions
+          ref: ${{ job.workflow_sha }}
+          path: .actions
+          sparse-checkout: mise.toml
+          sparse-checkout-cone-mode: false
+          persist-credentials: false
+
       - name: Install mise
         uses: jdx/mise-action@e6a8b3978addb5a52f2b4cd9d91eafa7f0ab959d # v4.2.0
+        with:
+          install: false
 
       - name: Run actionlint
-        run: mise exec -- actionlint -color
+        run: |
+          version="$(yq -p toml -oy '.tools.actionlint' .actions/mise.toml)"
+          mise exec "actionlint@${version}" -- actionlint -color
 
   ghalint:
     name: Run ghalint
@@ -51,16 +65,30 @@ jobs:
     permissions:
       contents: read
     steps:
-      - name: Checkout repository
+      - name: Checkout caller repository
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
           persist-credentials: false
 
+      - name: Check out actions repository
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          repository: cffnpwr/actions
+          ref: ${{ job.workflow_sha }}
+          path: .actions
+          sparse-checkout: mise.toml
+          sparse-checkout-cone-mode: false
+          persist-credentials: false
+
       - name: Install mise
         uses: jdx/mise-action@e6a8b3978addb5a52f2b4cd9d91eafa7f0ab959d # v4.2.0
+        with:
+          install: false
 
       - name: Run ghalint
-        run: mise exec -- ghalint run
+        run: |
+          version="$(yq -p toml -oy '.tools.ghalint' .actions/mise.toml)"
+          mise exec "ghalint@${version}" -- ghalint run
 
   zizmor:
     name: Run zizmor
@@ -69,14 +97,24 @@ jobs:
     permissions:
       contents: read
     steps:
-      - name: Checkout repository
+      - name: Checkout caller repository
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
           persist-credentials: false
 
+      - name: Check out actions repository
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          repository: cffnpwr/actions
+          ref: ${{ job.workflow_sha }}
+          path: .actions
+          sparse-checkout: mise.toml
+          sparse-checkout-cone-mode: false
+          persist-credentials: false
+
       - name: Read tool versions
         id: tools
-        run: echo "zizmor=$(yq -p toml -oy '.tools.zizmor' mise.toml)" >> "$GITHUB_OUTPUT"
+        run: echo "zizmor=$(yq -p toml -oy '.tools.zizmor' .actions/mise.toml)" >> "$GITHUB_OUTPUT"
 
       - name: Run zizmor
         uses: zizmorcore/zizmor-action@192e21d79ab29983730a13d1382995c2307fbcaa # v0.5.7
