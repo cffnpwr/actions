@@ -1,0 +1,8 @@
+# job.workflow_sha / job.workflow_ref は正当な context プロパティだが actionlint が
+# 未対応で偽陽性になる。対応が入ったら削除する。
+# ref: https://github.com/rhysd/actionlint/issues/647
+paths:
+  .github/workflows/commitlint.yaml:
+    ignore:
+      - 'property "workflow_sha" is not defined'
+      - 'property "workflow_ref" is not defined'

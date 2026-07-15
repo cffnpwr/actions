@@ -2,43 +2,5 @@
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": [
     "github>cffnpwr/renovate-config"
-  ],
-  "customManagers": [
-    {
-      "customType": "regex",
-      "managerFilePatterns": ["/^\\.github/workflows/.+\\.ya?ml$/"],
-      "matchStrings": [
-        "ACTIONLINT_VERSION=(?<currentValue>v[\\d.]+)"
-      ],
-      "depNameTemplate": "rhysd/actionlint",
-      "datasourceTemplate": "github-releases"
-    },
-    {
-      "customType": "regex",
-      "managerFilePatterns": ["/^\\.github/workflows/.+\\.ya?ml$/"],
-      "matchStrings": [
-        "GHALINT_VERSION=(?<currentValue>v[\\d.]+)"
-      ],
-      "depNameTemplate": "suzuki-shunsuke/ghalint",
-      "datasourceTemplate": "github-releases"
-    },
-    {
-      "customType": "regex",
-      "managerFilePatterns": ["/^\\.github/workflows/.+\\.ya?ml$/"],
-      "matchStrings": [
-        "COMMITLINT_VERSION: \"?(?<currentValue>[\\d.]+)\"?"
-      ],
-      "depNameTemplate": "@commitlint/cli",
-      "datasourceTemplate": "npm"
-    },
-    {
-      "customType": "regex",
-      "managerFilePatterns": ["/^\\.github/workflows/.+\\.ya?ml$/"],
-      "matchStrings": [
-        "CONFIG_PACKAGE_VERSION: \"?(?<currentValue>[\\d.]+)\"?"
-      ],
-      "depNameTemplate": "@cffnpwr/commitlint-config",
-      "datasourceTemplate": "npm"
-    }
   ]
 }

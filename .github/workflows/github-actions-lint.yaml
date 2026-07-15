@@ -38,31 +38,11 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Install actionlint
-        env:
-          GH_TOKEN: ${{ github.token }}
-          RUNNER_OS: ${{ runner.os }}
-          RUNNER_ARCH: ${{ runner.arch }}
-        run: |
-          ACTIONLINT_VERSION=v1.7.12
-          os="$(echo "$RUNNER_OS" | tr '[:upper:]' '[:lower:]')"
-          case "$RUNNER_ARCH" in
-            X64)   arch="amd64" ;;
-            ARM64) arch="arm64" ;;
-            ARM)   arch="armv6" ;;
-            *)     echo "Unsupported architecture: $RUNNER_ARCH" && exit 1 ;;
-          esac
-          asset="actionlint_${ACTIONLINT_VERSION#v}_${os}_${arch}.tar.gz"
-          gh release download "$ACTIONLINT_VERSION" \
-            -R rhysd/actionlint \
-            -p "$asset"
-          gh attestation verify "$asset" \
-            -R rhysd/actionlint
-          tar xf "$asset" actionlint
-          sudo mv actionlint /usr/local/bin/
+      - name: Install mise
+        uses: jdx/mise-action@e6a8b3978addb5a52f2b4cd9d91eafa7f0ab959d # v4.2.0
 
       - name: Run actionlint
-        run: actionlint -color
+        run: mise exec -- actionlint -color
 
   ghalint:
     name: Run ghalint
@@ -76,31 +56,11 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Install ghalint
-        env:
-          GH_TOKEN: ${{ github.token }}
-          RUNNER_OS: ${{ runner.os }}
-          RUNNER_ARCH: ${{ runner.arch }}
-        run: |
-          GHALINT_VERSION=v1.5.6
-          os="$(echo "$RUNNER_OS" | tr '[:upper:]' '[:lower:]')"
-          case "$RUNNER_ARCH" in
-            X64)   arch="amd64" ;;
-            ARM64) arch="arm64" ;;
-            *)     echo "Unsupported architecture: $RUNNER_ARCH" && exit 1 ;;
-          esac
-          asset="ghalint_${GHALINT_VERSION#v}_${os}_${arch}.tar.gz"
-          gh release download "$GHALINT_VERSION" \
-            -R suzuki-shunsuke/ghalint \
-            -p "$asset"
-          gh attestation verify "$asset" \
-            -R suzuki-shunsuke/ghalint \
-            --signer-workflow suzuki-shunsuke/go-release-workflow/.github/workflows/release.yaml
-          tar xf "$asset" ghalint
-          sudo mv ghalint /usr/local/bin/
+      - name: Install mise
+        uses: jdx/mise-action@e6a8b3978addb5a52f2b4cd9d91eafa7f0ab959d # v4.2.0
 
       - name: Run ghalint
-        run: ghalint run
+        run: mise exec -- ghalint run
 
   zizmor:
     name: Run zizmor
@@ -114,7 +74,12 @@ jobs:
         with:
           persist-credentials: false
 
+      - name: Read tool versions
+        id: tools
+        run: echo "zizmor=$(yq -p toml -oy '.tools.zizmor' mise.toml)" >> "$GITHUB_OUTPUT"
+
       - name: Run zizmor
         uses: zizmorcore/zizmor-action@192e21d79ab29983730a13d1382995c2307fbcaa # v0.5.7
         with:
+          version: ${{ steps.tools.outputs.zizmor }}
           advanced-security: false
