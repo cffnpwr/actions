@@ -1,0 +1,46 @@
+name: commitlint
+description: Run commitlint over a commit range, skipping commits by ignored author emails.
+inputs:
+  from:
+    description: Base SHA (exclusive) of the commit range to lint.
+    required: true
+  to:
+    description: Head SHA (inclusive) of the commit range to lint.
+    required: true
+  ignore-emails:
+    description: |
+      Newline-separated author email addresses to exclude from commitlint.
+      When empty, no author is excluded.
+    required: false
+    default: ""
+  config-file:
+    description: |
+      Path to a commitlint config file in the target repository (relative to its
+      root). When empty, the repository's own config is auto-discovered, falling
+      back to the bundled @cffnpwr/commitlint-config.
+    required: false
+    default: ""
+
+runs:
+  using: composite
+  steps:
+    - name: Set up Bun
+      uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+      with:
+        bun-version-file: ${{ github.action_path }}/.tool-versions
+
+    - name: Install dependencies
+      shell: bash
+      working-directory: ${{ github.action_path }}
+      run: bun install --frozen-lockfile --production
+
+    - name: Run commitlint
+      shell: bash
+      working-directory: ${{ github.action_path }}
+      env:
+        REPO_PATH: ${{ github.workspace }}
+        FROM_SHA: ${{ inputs.from }}
+        TO_SHA: ${{ inputs.to }}
+        IGNORE_EMAILS: ${{ inputs.ignore-emails }}
+        CONFIG_FILE: ${{ inputs.config-file }}
+      run: bun run "$GITHUB_ACTION_PATH/src/main.ts"

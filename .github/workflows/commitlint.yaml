@@ -8,9 +8,19 @@ on:
       config-file:
         description: |
           Path to a commitlint config file in the caller repository (relative to repo root).
-          When empty, the shared @cffnpwr/commitlint-config is installed and used.
+          When empty, the caller's own config is auto-discovered, falling back to
+          the bundled @cffnpwr/commitlint-config.
         type: string
         default: ""
+      ignore-emails:
+        description: |
+          Newline-separated author email addresses to exclude from commitlint.
+          Defaults to renovate[bot]; pass an empty string to exclude no author.
+        type: string
+        # Keep in sync with the DEFAULT_IGNORE_EMAILS env below, which covers the
+        # direct pull_request runs of this repository (where workflow_call input
+        # defaults do not apply).
+        default: "29139614+renovate[bot]@users.noreply.github.com"
       runner:
         description: Runner label to use for the job
         type: string
@@ -29,6 +39,8 @@ jobs:
     timeout-minutes: 10
     permissions:
       contents: read
+    env:
+      DEFAULT_IGNORE_EMAILS: "29139614+renovate[bot]@users.noreply.github.com"
     steps:
       - name: Checkout caller repository
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
@@ -36,37 +48,24 @@ jobs:
           fetch-depth: 0
           persist-credentials: false
 
-      - name: Setup Bun
-        uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+      - name: Check out actions repository
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
-          bun-version: 1.3.14
-
-      - name: Resolve commitlint config
-        id: config
-        env:
-          CONFIG_FILE_INPUT: ${{ inputs.config-file }}
-          CONFIG_PACKAGE_VERSION: 1.0.1
-          WORKDIR: ${{ runner.temp }}/commitlint
-        run: |
-          set -euo pipefail
-          if [ -n "$CONFIG_FILE_INPUT" ]; then
-            if [ ! -f "$CONFIG_FILE_INPUT" ]; then
-              echo "::error::config-file '$CONFIG_FILE_INPUT' not found in caller repository"
-              exit 1
-            fi
-            echo "path=$CONFIG_FILE_INPUT" >> "$GITHUB_OUTPUT"
-            exit 0
-          fi
-          mkdir -p "$WORKDIR"
-          printf '{"name":"commitlint-runner","private":true}\n' > "$WORKDIR/package.json"
-          printf 'export default { extends: ["@cffnpwr/commitlint-config"] };\n' > "$WORKDIR/commitlint.config.mjs"
-          bun add --cwd "$WORKDIR" "@cffnpwr/commitlint-config@${CONFIG_PACKAGE_VERSION}"
-          echo "path=$WORKDIR/commitlint.config.mjs" >> "$GITHUB_OUTPUT"
+          repository: cffnpwr/actions
+          ref: ${{ job.workflow_sha }}
+          path: .actions
+          sparse-checkout: .github/actions/commitlint
+          persist-credentials: false
 
       - name: Run commitlint
-        env:
-          COMMITLINT_VERSION: 21.2.1
-          BASE_SHA: ${{ github.event.pull_request.base.sha }}
-          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
-          CONFIG_PATH: ${{ steps.config.outputs.path }}
-        run: bunx "@commitlint/cli@${COMMITLINT_VERSION}" --config "$CONFIG_PATH" --from "$BASE_SHA" --to "$HEAD_SHA" --verbose
+        uses: ./.actions/.github/actions/commitlint
+        with:
+          from: ${{ github.event.pull_request.base.sha }}
+          to: ${{ github.event.pull_request.head.sha }}
+          # On a direct pull_request run this workflow is the top-level one, so
+          # github.workflow_ref equals job.workflow_ref and workflow_call input
+          # defaults do not apply; use the env default. On workflow_call the two
+          # refs differ, so pass the caller's input through verbatim, letting an
+          # empty string opt out of all exclusion.
+          ignore-emails: ${{ github.workflow_ref == job.workflow_ref && env.DEFAULT_IGNORE_EMAILS || inputs.ignore-emails }}
+          config-file: ${{ inputs.config-file }}
