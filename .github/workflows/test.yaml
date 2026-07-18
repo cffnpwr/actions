@@ -36,7 +36,7 @@ jobs:
       - name: Read tool versions
         id: tools
         working-directory: ${{ github.workspace }}
-        run: echo "bun=$(yq -p toml -oy '.tools.bun' mise.toml)" >> "$GITHUB_OUTPUT"
+        run: echo "bun=$(sed -n 's/^bun[[:space:]]*=[[:space:]]*"\([^"]*\)".*/\1/p' mise.toml)" >> "$GITHUB_OUTPUT"
 
       - name: Setup Bun
         uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
