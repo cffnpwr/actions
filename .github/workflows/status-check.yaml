@@ -50,6 +50,7 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GH_REPO: ${{ github.repository }}
           pr_number: ${{ github.event.number }}
+          check_run_id: ${{ job.check_run_id }}
           pending_interval: ${{ inputs.pending-interval || 15 }}
           error_interval: ${{ inputs.error-interval || 30 }}
         run: |-
@@ -57,15 +58,15 @@ jobs:
 
             until checks_json="$( \
               gh pr checks "$pr_number" \
-                --json bucket,name,workflow \
-                --jq 'map(select(.workflow != "Status check"))' \
+                --json bucket,workflow,link \
             )"; do
               sleep "$error_interval"
             done
 
             checks_state="$(\
-              jq -cr '
-                {
+              jq -cr --arg check_run_id "$check_run_id" '
+                map(select((.link // "") | endswith("/job/" + $check_run_id) | not))
+                | {
                   has_fail: any(.[]; .bucket == "fail" or .bucket == "cancel"),
                   has_pending: any(.[]; .workflow != "" and .bucket == "pending"),
                 }
