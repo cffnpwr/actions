@@ -34,6 +34,13 @@ mise exec -- ghalint run
   treefmt.yaml               # Format check via treefmt (workflow_call + push/PR)
   github-actions-lint.yaml   # actionlint + ghalint + zizmor (workflow_call + push/PR)
   semantic-pr-title.yaml     # Semantic PR title enforcement (workflow_call + pull_request_target)
+  release-npm-package.yaml   # release-please + npm/JSR publish + draft release (workflow_call)
+.github/actions/             # Composite actions used by the reusable workflows
+  commitlint/                # Run commitlint over a commit range
+  collect-released-packages/ # Normalize release-please outputs, split by target
+  resolve-workspace-deps/    # Replace `workspace:` deps with actual versions
+docs/                        # Caller-facing documents for workflows with requirements
+  release-npm-package.md     # Requirements of release-npm-package.yaml
 mise.toml                    # Dev tool versions (mise)
 treefmt.toml                 # treefmt configuration
 yamlfmt.yaml                 # yamlfmt configuration

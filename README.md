@@ -17,6 +17,10 @@ jobs:
     secrets: inherit
 ```
 
+Some workflows have requirements on the caller repository. They are documented below.
+
+- [release-npm-package](./docs/release-npm-package.md)
+
 ## License
 
 [MIT License](./LICENSE)

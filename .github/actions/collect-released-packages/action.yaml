@@ -1,0 +1,40 @@
+name: Collect released packages
+description: >-
+  Normalize release-please outputs into a single shape and split them by
+  publishing target.
+inputs:
+  release-outputs:
+    description: JSON object of the release-please action outputs.
+    required: true
+outputs:
+  npm-packages:
+    description: JSON array of `{path, tag, sha}` to publish to npm.
+    value: ${{ steps.collect.outputs.npm-packages }}
+  jsr-packages:
+    description: JSON array of `{path, tag, sha}` to publish to JSR.
+    value: ${{ steps.collect.outputs.jsr-packages }}
+  tags:
+    description: JSON array of every released tag.
+    value: ${{ steps.collect.outputs.tags }}
+
+runs:
+  using: composite
+  steps:
+    - name: Resolve Bun version
+      id: bun
+      shell: bash
+      run: |
+        version="$(sed -n 's/^bun[[:space:]]*=[[:space:]]*"\([^"]*\)".*/\1/p' "$GITHUB_ACTION_PATH/../../../mise.toml")"
+        echo "version=$version" >> "$GITHUB_OUTPUT"
+
+    - name: Set up Bun
+      uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+      with:
+        bun-version: ${{ steps.bun.outputs.version }}
+
+    - name: Collect released packages
+      id: collect
+      shell: bash
+      env:
+        RELEASE_OUTPUTS: ${{ inputs.release-outputs }}
+      run: bun run "$GITHUB_ACTION_PATH/src/main.ts"

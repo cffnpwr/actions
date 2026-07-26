@@ -1,0 +1,29 @@
+name: Resolve workspace dependencies
+description: >-
+  Replace `workspace:` dependencies of a package with the actual versions,
+  waiting until each dependency is available on the npm registry.
+inputs:
+  package-path:
+    description: Path to the package directory, relative to the repository root.
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - name: Resolve Bun version
+      id: bun
+      shell: bash
+      run: |
+        version="$(sed -n 's/^bun[[:space:]]*=[[:space:]]*"\([^"]*\)".*/\1/p' "$GITHUB_ACTION_PATH/../../../mise.toml")"
+        echo "version=$version" >> "$GITHUB_OUTPUT"
+
+    - name: Set up Bun
+      uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+      with:
+        bun-version: ${{ steps.bun.outputs.version }}
+
+    - name: Resolve workspace dependencies
+      shell: bash
+      env:
+        PACKAGE_PATH: ${{ inputs.package-path }}
+      run: bun run "$GITHUB_ACTION_PATH/src/main.ts"

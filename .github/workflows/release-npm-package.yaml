@@ -1,0 +1,221 @@
+# 呼び出し元リポジトリの要件と呼び出し方はdocs/release-npm-package.mdを参照。
+name: Release npm package
+on:
+  workflow_call:
+    secrets:
+      RELEASE_APP_ID:
+        description: App ID of the GitHub App used to create releases.
+        required: true
+      RELEASE_PRIVATE_KEY:
+        description: Private key of the GitHub App used to create releases.
+        required: true
+
+permissions: {}
+
+jobs:
+  release-please:
+    name: Release Please
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: write
+      pull-requests: write
+      issues: write
+    outputs:
+      releases_created: ${{ steps.release.outputs.releases_created }}
+      npm_packages: ${{ steps.released.outputs.npm-packages }}
+      jsr_packages: ${{ steps.released.outputs.jsr-packages }}
+      tags: ${{ steps.released.outputs.tags }}
+    steps:
+      - name: Checkout caller repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Check out actions repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: cffnpwr/actions
+          ref: ${{ job.workflow_sha }}
+          path: .actions
+          sparse-checkout: |
+            .github/actions/collect-released-packages
+            mise.toml
+          sparse-checkout-cone-mode: false
+          persist-credentials: false
+
+      - name: Create GitHub App Token
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+        id: app-token
+        with:
+          app-id: ${{ secrets.RELEASE_APP_ID }}
+          private-key: ${{ secrets.RELEASE_PRIVATE_KEY }}
+          permission-metadata: read
+          permission-contents: write
+          permission-pull-requests: write
+          permission-issues: write
+
+      - name: Release Please
+        uses: googleapis/release-please-action@45996ed1f6d02564a971a2fa1b5860e934307cf7 # v5.0.0
+        id: release
+        with:
+          token: ${{ steps.app-token.outputs.token }}
+          target-branch: ${{ github.ref_name }}
+          config-file: .github/release-please/config.json
+          manifest-file: .github/release-please/manifest.json
+
+      - name: Collect released packages
+        id: released
+        uses: ./.actions/.github/actions/collect-released-packages
+        with:
+          release-outputs: ${{ toJSON(steps.release.outputs) }}
+
+  publish-npm:
+    name: Publish to npm (${{ matrix.package.path }})
+    needs: release-please
+    if: >-
+      ${{ needs.release-please.outputs.releases_created == 'true'
+        && needs.release-please.outputs.npm_packages != '[]' }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      id-token: write
+    strategy:
+      fail-fast: false
+      matrix:
+        package: ${{ fromJSON(needs.release-please.outputs.npm_packages) }}
+    steps:
+      - name: Checkout caller repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ matrix.package.sha }}
+          persist-credentials: false
+
+      - name: Check out actions repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: cffnpwr/actions
+          ref: ${{ job.workflow_sha }}
+          path: .actions
+          sparse-checkout: |
+            .github/actions/resolve-workspace-deps
+            mise.toml
+          sparse-checkout-cone-mode: false
+          persist-credentials: false
+
+      - name: Install mise
+        uses: jdx/mise-action@dad1bfd3df957f44999b559dd69dc1671cb4e9ea # v4.2.1
+        with:
+          install_args: bun
+
+      # ランナー同梱のnpmは10系で、trusted publishingが要求する11.5.1以上を満たさない。
+      # bun publishはOIDCに未対応のため、publishはnpm CLIで実行する。
+      - name: Setup Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: "24.18.0"
+          registry-url: "https://registry.npmjs.org"
+          package-manager-cache: false
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Build
+        run: bun run build
+
+      - name: Resolve workspace dependencies
+        uses: ./.actions/.github/actions/resolve-workspace-deps
+        with:
+          package-path: ${{ matrix.package.path }}
+
+      # 開発時はソースを、公開物はビルド成果物を参照させるためexportsを差し替える。
+      # bun pm packはpublishConfigを解釈しないため、packの前に自前で適用する。
+      - name: Apply publishConfig to manifest
+        working-directory: ${{ matrix.package.path }}
+        run: |
+          jq '
+            .exports = (.publishConfig.exports // error("publishConfig.exports is required"))
+            | del(.publishConfig)
+          ' package.json > package.json.tmp
+          mv package.json.tmp package.json
+
+      - name: Pack
+        id: pack
+        working-directory: ${{ matrix.package.path }}
+        run: echo "tarball=$(bun pm pack --quiet | tail -n1)" >> "$GITHUB_OUTPUT"
+
+      - name: Publish to npm
+        working-directory: ${{ matrix.package.path }}
+        env:
+          TARBALL: ${{ steps.pack.outputs.tarball }}
+        run: npm publish "$TARBALL" --access public --provenance
+
+  publish-jsr:
+    name: Publish to JSR (${{ matrix.package.path }})
+    needs: release-please
+    if: >-
+      ${{ needs.release-please.outputs.releases_created == 'true'
+        && needs.release-please.outputs.jsr_packages != '[]' }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      id-token: write
+    strategy:
+      fail-fast: false
+      matrix:
+        package: ${{ fromJSON(needs.release-please.outputs.jsr_packages) }}
+    steps:
+      - name: Checkout caller repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ matrix.package.sha }}
+          persist-credentials: false
+
+      - name: Install mise
+        uses: jdx/mise-action@dad1bfd3df957f44999b559dd69dc1671cb4e9ea # v4.2.1
+        with:
+          install_args: bun
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Publish to JSR
+        working-directory: ${{ matrix.package.path }}
+        run: bunx jsr publish
+
+  # JSRへ公開するパッケージが無い場合などpublishジョブはskipされうる。そのため成功とskipの双方を許容する。
+  publish-release:
+    name: Publish GitHub releases
+    needs:
+      - release-please
+      - publish-npm
+      - publish-jsr
+    if: >-
+      ${{ !cancelled()
+        && needs.release-please.outputs.releases_created == 'true'
+        && (needs.publish-npm.result == 'success' || needs.publish-npm.result == 'skipped')
+        && (needs.publish-jsr.result == 'success' || needs.publish-jsr.result == 'skipped') }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions: {}
+    steps:
+      - name: Create GitHub App Token
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+        id: app-token
+        with:
+          app-id: ${{ secrets.RELEASE_APP_ID }}
+          private-key: ${{ secrets.RELEASE_PRIVATE_KEY }}
+          permission-contents: write
+
+      - name: Publish draft releases
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          GH_REPO: ${{ github.repository }}
+          TAGS: ${{ needs.release-please.outputs.tags }}
+        run: |-
+          while read -r tag; do
+            echo "Publishing release ${tag}"
+            gh release edit "$tag" --draft=false
+          done < <(jq -r '.[]' <<< "$TAGS")

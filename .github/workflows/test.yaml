@@ -18,15 +18,22 @@ concurrency:
 permissions: {}
 
 jobs:
-  commitlint:
-    name: Test commitlint
+  test:
+    name: Test ${{ matrix.action }}
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     permissions:
       contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        action:
+          - commitlint
+          - collect-released-packages
+          - resolve-workspace-deps
     defaults:
       run:
-        working-directory: .github/actions/commitlint
+        working-directory: .github/actions/${{ matrix.action }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1

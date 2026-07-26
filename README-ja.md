@@ -17,6 +17,11 @@ jobs:
     secrets: inherit
 ```
 
+呼び出し元リポジトリに要件があるワークフローもあります。
+その要件は以下のドキュメントに記載しています。
+
+- [release-npm-package](./docs/release-npm-package.md)
+
 ## License
 
 [MIT License](./LICENSE)
