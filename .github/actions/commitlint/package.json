@@ -8,14 +8,14 @@
   },
   "dependencies": {
     "@cffnpwr/commitlint-config": "1.0.1",
-    "@commitlint/lint": "21.2.2",
-    "@commitlint/load": "21.2.2",
+    "@commitlint/lint": "21.2.3",
+    "@commitlint/load": "21.2.3",
     "es-git": "0.7.0"
   },
   "devDependencies": {
     "@cffnpwr/eslint-config": "2.0.1",
     "@cffnpwr/tsconfig": "1.0.0",
-    "@commitlint/types": "21.2.0",
+    "@commitlint/types": "21.2.3",
     "@types/bun": "1.4.0",
     "@typescript-eslint/parser": "8.68.0",
     "eslint": "10.9.1",
