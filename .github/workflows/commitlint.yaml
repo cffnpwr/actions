@@ -48,17 +48,8 @@ jobs:
           fetch-depth: 0
           persist-credentials: false
 
-      - name: Check out actions repository
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          repository: cffnpwr/actions
-          ref: ${{ job.workflow_sha }}
-          path: .actions
-          sparse-checkout: .github/actions/commitlint
-          persist-credentials: false
-
       - name: Run commitlint
-        uses: ./.actions/.github/actions/commitlint
+        uses: $/.github/actions/commitlint
         with:
           from: ${{ github.event.pull_request.base.sha }}
           to: ${{ github.event.pull_request.head.sha }}
