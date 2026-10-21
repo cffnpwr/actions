@@ -16,7 +16,7 @@ permissions: {}
 jobs:
   llm-renovate-review:
     name: LLM Renovate Review
-    uses: ./.github/workflows/llm-renovate-review.yaml
+    uses: $/.github/workflows/llm-renovate-review.yaml
     if: >-
       github.event.pull_request.user.login == 'renovate[bot]' &&
       contains(github.event.pull_request.title, '(major)')

@@ -1,11 +1,18 @@
-# job.workflow_sha / job.workflow_ref は正当な context プロパティだが actionlint が
-# 未対応で偽陽性になる。対応が入ったら削除する。
-# ref: https://github.com/rhysd/actionlint/issues/647
+# NOTE: job.workflow_sha/job.workflow_refは正当なcontextプロパティだがactionlintが未対応で偽陽性になる。
+#       ref: <https://github.com/rhysd/actionlint/issues/647>
+# TODO: 対応が入ったら削除する。
+#
+# NOTE: usesのself-repository構文（$/）はactionlintが未対応で偽陽性になる。
+#       ref: <https://github.com/rhysd/actionlint/issues/711>
+# TODO: 対応が入ったら削除する。
 paths:
   .github/workflows/commitlint.yaml:
     ignore:
-      - 'property "workflow_sha" is not defined'
       - 'property "workflow_ref" is not defined'
+      - 'specifying action "\$/.+" in invalid format because ref is missing'
   .github/workflows/github-actions-lint.yaml:
     ignore:
       - 'property "workflow_sha" is not defined'
+  .github/workflows/llm-renovate-review-for-this-repo.yaml:
+    ignore:
+      - 'reusable workflow call "\$/.+" at "uses" is not following the format'
