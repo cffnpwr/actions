@@ -5,6 +5,13 @@
 # NOTE: usesのself-repository構文（$/）はactionlintが未対応で偽陽性になる。
 #       ref: <https://github.com/rhysd/actionlint/issues/711>
 # TODO: 対応が入ったら削除する。
+#
+# NOTE: ubuntu-26.04はGitHub-hosted runnerのGAラベルだがactionlintが未対応で偽陽性になる。
+#       ref: <https://github.com/rhysd/actionlint/issues/682>
+# TODO: 対応が入ったら削除する。
+self-hosted-runner:
+  labels:
+    - ubuntu-26.04
 paths:
   .github/workflows/commitlint.yaml:
     ignore:
