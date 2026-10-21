@@ -8,8 +8,8 @@
   },
   "dependencies": {
     "@cffnpwr/commitlint-config": "1.0.1",
-    "@commitlint/lint": "21.2.3",
-    "@commitlint/load": "21.2.3",
+    "@commitlint/lint": "21.2.4",
+    "@commitlint/load": "21.2.4",
     "es-git": "0.7.0"
   },
   "devDependencies": {
