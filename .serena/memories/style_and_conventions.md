@@ -25,7 +25,7 @@
 - Use `persist-credentials: false` on all checkout steps
 - Set `permissions: {}` at workflow top level, grant minimum per-job
 - Use `concurrency` groups with `cancel-in-progress: true`
-- Runner: `ubuntu-24.04`
+- Runner: `ubuntu-26.04`
 - Set explicit `timeout-minutes` for all jobs
 
 ## Commit Convention

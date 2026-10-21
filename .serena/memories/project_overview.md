@@ -31,5 +31,5 @@ renovate.json          # Renovate bot config (extends cffnpwr/renovate-config)
 - All workflows use `permissions: {}` at top level, granting minimum permissions per job
 - Actions are pinned by full commit SHA with version comment (e.g., `@<SHA> # v6.0.2`)
 - Checkout steps use `persist-credentials: false` for security
-- Runner: `ubuntu-24.04` for all jobs
+- Runner: `ubuntu-26.04` for all jobs
 - Concurrency groups cancel in-progress runs
