@@ -136,6 +136,14 @@ jobs:
           username: ${{ inputs.registry-username || github.actor }}
           password: ${{ secrets.REGISTRY_PASSWORD || github.token }}
 
+      # NOTE: scopeが同じビルドはcacheを上書きし合うため、イメージとplatformごとに分ける
+      - name: Resolve cache scope
+        id: cache
+        env:
+          IMAGE: ${{ inputs.image }}
+          PLATFORM: ${{ matrix.platform }}
+        run: echo "scope=$(printf '%s' "${IMAGE}-${PLATFORM}" | tr -c 'A-Za-z0-9._-' '_')" >> "$GITHUB_OUTPUT"
+
       # NOTE: pushする前に既存のタグとimage configを比較するため、まずローカルのOCI layoutへ出力する
       - name: Build image
         uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
@@ -147,6 +155,10 @@ jobs:
           platforms: ${{ matrix.platform }}
           annotations: manifest:org.opencontainers.image.created=${{ steps.created.outputs.created }}
           outputs: type=oci,dest=${{ runner.temp }}/oci,tar=false,rewrite-timestamp=true
+          cache-from: type=gha,scope=${{ steps.cache.outputs.scope }}
+          # NOTE: PRで保存したcacheは同じPRでしか復元できないため、PR以外でだけ保存
+          #       multi-stage buildの中間のstageも再利用するため、全レイヤーを保存
+          cache-to: ${{ github.event_name != 'pull_request' && format('type=gha,mode=max,scope={0}', steps.cache.outputs.scope) || '' }}
 
       # NOTE: provenance attestationはビルドごとに内容が変わるため、indexやmanifestのdigestではなく、
       #       非圧縮のレイヤーのdigestを含むimage configのdigestを比較する
