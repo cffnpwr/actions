@@ -23,5 +23,6 @@ export const partitionByEmail = (
       toLint.push(commit);
     }
   }
+
   return { toLint, toSkip };
 };
