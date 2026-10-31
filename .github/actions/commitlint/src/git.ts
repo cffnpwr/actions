@@ -1,12 +1,16 @@
-// Reading the commits in a range via libgit2 (es-git), without shelling out to
-// the git CLI.
+/*
+ * Reading the commits in a range via libgit2 (es-git), without shelling out to
+ * the git CLI.
+ */
 
 import { openRepository, RevwalkSort } from "es-git";
 
 import type { Commit } from "./commits.ts";
 
-// List the commits in `from..to` (oldest first) with the fields commitlint
-// needs. `from` is excluded and `to` is included, matching `git log from..to`.
+/*
+ * List the commits in `from..to` (oldest first) with the fields commitlint
+ * needs. `from` is excluded and `to` is included, matching `git log from..to`.
+ */
 export const readCommits = async (
   repoPath: string,
   from: string,
@@ -28,5 +32,6 @@ export const readCommits = async (
       message: commit.message(),
     });
   }
+
   return commits;
 };
