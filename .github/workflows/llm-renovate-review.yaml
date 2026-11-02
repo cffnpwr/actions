@@ -47,7 +47,7 @@ jobs:
           provider=$(echo "$MODEL" | cut -d/ -f1 | tr '[:lower:]' '[:upper:]')
           echo "${provider}_API_KEY=${LLM_API_KEY}" >> "$GITHUB_ENV"
 
-      - uses: anomalyco/opencode/github@3ebcf9a32c7b28f658cfee80775448929361727a # v2.2.1
+      - uses: anomalyco/opencode/github@45898d0f8569225eb1ddb4ee13f8581b34dff311 # v2.2.4
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
