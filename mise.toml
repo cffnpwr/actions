@@ -1,7 +1,7 @@
 [tools]
 actionlint = "1.7.12"
 bun = "1.4.4"
-ghalint = "1.5.7"
+ghalint = "1.6.0"
 yamlfmt = "0.21.0"
 zizmor = "1.31.1"
 "aqua:numtide/treefmt" = "2.6.0"
