@@ -1,6 +1,6 @@
 name: Status check
 on:
-  pull_request_target: # zizmor: ignore[dangerous-triggers]
+  pull_request:
     branches:
       - main
     types:
