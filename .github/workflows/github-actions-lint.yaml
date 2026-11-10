@@ -44,19 +44,20 @@ jobs:
           repository: cffnpwr/actions
           ref: ${{ job.workflow_sha }}
           path: .actions
-          sparse-checkout: mise.toml
+          sparse-checkout: |
+            mise.toml
+            mise.lock
           sparse-checkout-cone-mode: false
           persist-credentials: false
 
-      - name: Install mise
+      - name: Install actionlint
         uses: jdx/mise-action@b44d12e7d0d8ee7461bb893e1b1993500433185b # v5.2.7
         with:
-          install: false
+          working_directory: .actions
+          install_args: actionlint
 
       - name: Run actionlint
-        run: |
-          version="$(sed -n 's/^actionlint[[:space:]]*=[[:space:]]*"\([^"]*\)".*/\1/p' .actions/mise.toml)"
-          mise exec "actionlint@${version}" -- actionlint -color
+        run: actionlint -color
 
   ghalint:
     name: Run ghalint
@@ -76,19 +77,20 @@ jobs:
           repository: cffnpwr/actions
           ref: ${{ job.workflow_sha }}
           path: .actions
-          sparse-checkout: mise.toml
+          sparse-checkout: |
+            mise.toml
+            mise.lock
           sparse-checkout-cone-mode: false
           persist-credentials: false
 
-      - name: Install mise
+      - name: Install ghalint
         uses: jdx/mise-action@b44d12e7d0d8ee7461bb893e1b1993500433185b # v5.2.7
         with:
-          install: false
+          working_directory: .actions
+          install_args: ghalint
 
       - name: Run ghalint
-        run: |
-          version="$(sed -n 's/^ghalint[[:space:]]*=[[:space:]]*"\([^"]*\)".*/\1/p' .actions/mise.toml)"
-          mise exec "ghalint@${version}" -- ghalint run
+        run: ghalint run
 
   zizmor:
     name: Run zizmor
@@ -108,16 +110,19 @@ jobs:
           repository: cffnpwr/actions
           ref: ${{ job.workflow_sha }}
           path: .actions
-          sparse-checkout: mise.toml
+          sparse-checkout: |
+            mise.toml
+            mise.lock
           sparse-checkout-cone-mode: false
           persist-credentials: false
 
-      - name: Read tool versions
-        id: tools
-        run: echo "zizmor=$(sed -n 's/^zizmor[[:space:]]*=[[:space:]]*"\([^"]*\)".*/\1/p' .actions/mise.toml)" >> "$GITHUB_OUTPUT"
+      - name: Install zizmor
+        uses: jdx/mise-action@b44d12e7d0d8ee7461bb893e1b1993500433185b # v5.2.7
+        with:
+          working_directory: .actions
+          install_args: zizmor
 
       - name: Run zizmor
-        uses: zizmorcore/zizmor-action@45d7276c9ca790aabd705e31ca99c6185c3e76dd # v0.8.1
-        with:
-          version: ${{ steps.tools.outputs.zizmor }}
-          advanced-security: false
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: zizmor --persona=regular --collect=default --color=always -- .
