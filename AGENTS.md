@@ -30,7 +30,7 @@ mise exec -- ghalint run
 
 ```
 .github/workflows/           # Reusable GitHub Actions workflows
-  status-check.yaml          # PR status check aggregator (workflow_call + pull_request_target)
+  status-check.yaml          # PR status check aggregator (workflow_call + pull_request)
   treefmt.yaml               # Format check via treefmt (workflow_call + push/PR)
   github-actions-lint.yaml   # actionlint + ghalint + zizmor (workflow_call + push/PR)
   semantic-pr-title.yaml     # Semantic PR title enforcement (workflow_call + pull_request_target)
