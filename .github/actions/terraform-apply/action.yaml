@@ -1,0 +1,30 @@
+name: Terraform apply
+description: |
+  Initialize a Terraform root, apply it, and comment the result on the merged pull request with tfcmt.
+  terraform and tfcmt must be on PATH. Set the credentials for the backend and the
+  providers as environment variables of the step.
+inputs:
+  root:
+    description: Path to the Terraform root directory, relative to the workspace.
+    required: true
+  github-token:
+    description: Token that tfcmt uses to comment on the merged pull request.
+    required: false
+    default: ${{ github.token }}
+
+runs:
+  using: composite
+  steps:
+    - name: Initialize Terraform
+      shell: bash
+      env:
+        ROOT: ${{ inputs.root }}
+      run: terraform -chdir="$ROOT" init -input=false
+
+    - name: Apply Terraform
+      shell: bash
+      env:
+        ROOT: ${{ inputs.root }}
+        GITHUB_TOKEN: ${{ inputs.github-token }}
+      # NOTE: rootごとにPRのコメントを分けるため、targetにrootのディレクトリを指定
+      run: tfcmt -var "target:$ROOT" apply -- terraform -chdir="$ROOT" apply -input=false -auto-approve
