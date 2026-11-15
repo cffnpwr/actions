@@ -1,0 +1,10 @@
+name: cffnpwr-terraform-plan
+url: https://github.com/cffnpwr/actions
+permissions:
+  metadata: read
+  # NOTE: planのrefreshでGitHub providerがenvironmentのsecretを取得するため、Environmentsのread権限が必要
+  environments: read
+# NOTE: Client IDと秘密鍵は、このAppを使う各リポジトリがTerraformでenvironmentに登録する
+destination:
+  type: privateKeyFile
+  path: terraform-plan.pem

@@ -1,0 +1,30 @@
+name: Terraform plan
+description: |
+  Initialize a Terraform root and comment its plan on the pull request with tfcmt.
+  terraform and tfcmt must be on PATH. Set the credentials for the backend and the
+  providers as environment variables of the step.
+inputs:
+  root:
+    description: Path to the Terraform root directory, relative to the workspace.
+    required: true
+  github-token:
+    description: Token that tfcmt uses to comment on the pull request.
+    required: false
+    default: ${{ github.token }}
+
+runs:
+  using: composite
+  steps:
+    - name: Initialize Terraform
+      shell: bash
+      env:
+        ROOT: ${{ inputs.root }}
+      run: terraform -chdir="$ROOT" init -input=false
+
+    - name: Plan Terraform
+      shell: bash
+      env:
+        ROOT: ${{ inputs.root }}
+        GITHUB_TOKEN: ${{ inputs.github-token }}
+      # NOTE: rootごとにPRのコメントを分けるため、targetにrootのディレクトリを指定
+      run: tfcmt -var "target:$ROOT" plan -patch -disable-label -- terraform -chdir="$ROOT" plan -input=false -lock=false

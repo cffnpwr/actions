@@ -5,11 +5,15 @@ on:
       - main
     paths:
       - .github/actions/**
+      - modules/**
+      - .golangci.yaml
   pull_request:
     branches:
       - main
     paths:
       - .github/actions/**
+      - modules/**
+      - .golangci.yaml
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -46,3 +50,32 @@ jobs:
 
       - name: Test
         run: bun test
+
+  go-modules:
+    name: Lint modules/${{ matrix.module }}
+    strategy:
+      fail-fast: false
+      matrix:
+        module:
+          - github-app
+          - terraform-r2-backend
+    runs-on: ubuntu-26.04
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    defaults:
+      run:
+        working-directory: modules/${{ matrix.module }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Install Go and golangci-lint
+        uses: jdx/mise-action@b44d12e7d0d8ee7461bb893e1b1993500433185b # v5.2.7
+        with:
+          install_args: go golangci-lint
+
+      - name: Lint
+        run: golangci-lint run
