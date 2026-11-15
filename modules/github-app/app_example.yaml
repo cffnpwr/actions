@@ -1,0 +1,24 @@
+# yaml-language-server: $schema=./internal/appconfig/schema.json
+
+# create-github-appの定義ファイルの例
+
+# GitHub Appの名前
+name: cffnpwr-example
+# GitHub AppのホームページのURL
+url: https://github.com/cffnpwr/actions
+# manifestのdefault_permissions（値はreadかwrite）
+permissions:
+  contents: write
+  pull_requests: write
+# Client IDと秘密鍵の書き込み先
+destination:
+  # 各--repoのenvironmentに<credentialPrefix>_APP_CLIENT_IDと<credentialPrefix>_APP_PRIVATE_KEYを書き込む
+  type: environment
+  environment: example
+  credentialPrefix: EXAMPLE
+
+# ファイルに秘密鍵を書き込む場合の書き込み先
+# destination:
+#   type: privateKeyFile
+#   # 作業ディレクトリを起点とした、秘密鍵を書き込むファイルのパス
+#   path: example.pem

@@ -1,0 +1,9 @@
+name: cffnpwr-terraform-apply
+url: https://github.com/cffnpwr/actions
+permissions:
+  metadata: read
+  environments: write
+# NOTE: Client IDと秘密鍵は、このAppを使う各リポジトリがTerraformでenvironmentに登録する
+destination:
+  type: privateKeyFile
+  path: terraform-apply.pem
