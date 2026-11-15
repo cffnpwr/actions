@@ -4,3 +4,8 @@ excludes = [".git/**", ".serena/**"]
 [formatter.yaml]
 command = "yamlfmt"
 includes = ["*.yaml", "*.yml"]
+
+[formatter.go]
+command = "golangci-lint"
+options = ["fmt"]
+includes = ["*.go"]
