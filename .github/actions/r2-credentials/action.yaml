@@ -1,0 +1,33 @@
+name: R2 credentials
+description: Create R2 S3 API credentials from a Cloudflare account API token, masking them in the log.
+inputs:
+  account-id:
+    description: ID of the Cloudflare account that owns the API token.
+    required: true
+  api-token:
+    description: Cloudflare account API token to create the R2 credentials from.
+    required: true
+outputs:
+  aws-access-key-id:
+    description: R2 Access Key ID, which is the ID of the API token.
+    value: ${{ steps.r2-credentials.outputs.aws-access-key-id }}
+  aws-secret-access-key:
+    description: R2 Secret Access Key, which is the SHA-256 hash of the API token value.
+    value: ${{ steps.r2-credentials.outputs.aws-secret-access-key }}
+
+runs:
+  using: composite
+  steps:
+    - name: Install Go
+      uses: jdx/mise-action@b44d12e7d0d8ee7461bb893e1b1993500433185b # v5.2.7
+      with:
+        working_directory: ${{ github.action_path }}/../../..
+        install_args: go
+
+    - name: Create R2 credentials
+      id: r2-credentials
+      shell: bash
+      env:
+        CLOUDFLARE_ACCOUNT_ID: ${{ inputs.account-id }}
+        CLOUDFLARE_API_TOKEN: ${{ inputs.api-token }}
+      run: go -C "$GITHUB_ACTION_PATH/../../../modules/terraform-r2-backend" run ./cmd/r2-credentials
