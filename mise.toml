@@ -7,6 +7,58 @@ zizmor = "1.32.0"
 "aqua:numtide/treefmt" = "2.6.0"
 go = "1.27.3"
 golangci-lint = "2.15.0"
+fd = "10.5.2"
 
 [settings]
 lockfile = true
+
+[tasks.fmt]
+description = "Format YAML and Go"
+run = "treefmt"
+
+[tasks.lint]
+description = "Lint formatting, GitHub Actions, Go and TypeScript"
+depends = [
+  "lint:format",
+  "lint:actionlint",
+  "lint:ghalint",
+  "lint:zizmor",
+  "lint:go",
+  "lint:typescript",
+]
+
+[tasks."lint:format"]
+description = "Check that files are formatted"
+run = "treefmt --ci"
+
+[tasks."lint:actionlint"]
+description = "Lint GitHub Actions workflows with actionlint"
+run = "actionlint"
+
+[tasks."lint:ghalint"]
+description = "Lint GitHub Actions workflows and actions with ghalint"
+run = ["ghalint run", "ghalint run-action .github/actions/*/action.yaml"]
+
+[tasks."lint:zizmor"]
+description = "Audit GitHub Actions workflows and actions with zizmor"
+# NOTE: GH_TOKENが無い場合、zizmorはオンラインの検査を省いて実行
+run = "zizmor --persona=regular --collect=default -- ."
+
+[tasks."lint:go"]
+description = "Lint the Go modules in modules/"
+# NOTE: golangci-lintは既定で起動時にファイルロックを取得し、5秒以内に取得できないと失敗するため、並列実行を許可
+#       go.modがあるディレクトリごとにgolangci-lintを1つずつ実行
+run = """
+fd --type file --glob go.mod modules --threads 1 \
+  --exec sh -c 'cd "$1" && golangci-lint run --allow-parallel-runners' sh '{//}'
+"""
+
+[tasks."lint:typescript"]
+description = "Lint TypeScript of the commitlint action"
+dir = "{{config_root}}/.github/actions/commitlint"
+run = ["bun install --frozen-lockfile", "bun run lint"]
+
+[tasks.test]
+description = "Test the commitlint action"
+dir = "{{config_root}}/.github/actions/commitlint"
+run = ["bun install --frozen-lockfile", "bun test"]
