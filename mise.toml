@@ -5,7 +5,7 @@ ghalint = "1.6.0"
 yamlfmt = "0.21.0"
 zizmor = "1.32.0"
 "aqua:numtide/treefmt" = "2.6.0"
-go = "1.27.3"
+go = "1.27.4"
 golangci-lint = "2.15.0"
 fd = "10.5.2"
 
