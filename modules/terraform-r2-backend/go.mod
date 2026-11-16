@@ -4,7 +4,7 @@ go 1.27.4
 
 require (
 	filippo.io/age v1.3.2
-	github.com/cloudflare/cloudflare-go/v7 v7.14.0
+	github.com/cloudflare/cloudflare-go/v7 v7.15.0
 	go.yaml.in/yaml/v4 v4.0.0
 )
 
